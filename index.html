@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happiness Insights - 幸福のヒント</title>
+    <meta name="description" content="幸福度研究の第一人者たちの知見から、あなたの人生の悩みに寄り添うヒントを">
+    
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#f093fb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Happiness Insights">
+    <link rel="apple-touch-icon" href="/icon-512.png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600&family=Crimson+Text:wght@400;600&family=Noto+Serif+JP:wght@400;600&display=swap');
+        
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        
+        .insight-text {
+            font-family: 'Noto Serif JP', 'Crimson Text', serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #ffd700 100%);
+            animation: gradientShift 15s ease infinite;
+            background-size: 200% 200%;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .concern-btn {
+            transition: all 0.2s ease;
+        }
+
+        .concern-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .insight-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .insight-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+
+        .insight-card.expanded {
+            border-color: #f5576c;
+            box-shadow: 0 8px 24px rgba(245, 87, 108, 0.3);
+        }
+
+        .share-btn {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .insight-card.expanded .share-btn {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen p-4">
+    <div class="max-w-6xl mx-auto py-8">
+        <!-- Header -->
+        <div class="text-center mb-8 text-white fade-in">
+            <h1 class="text-4xl font-bold mb-2">✨ Happiness Insights</h1>
+            <h2 class="text-2xl mb-4">幸福のヒント</h2>
+            <p class="text-sm opacity-90" id="timeGreeting">おはようございます 🌅</p>
+        </div>
+
+        <!-- Main Card -->
+        <div class="card rounded-2xl shadow-2xl p-8 mb-6">
+            <!-- Language Toggle -->
+            <div class="flex justify-center mb-6">
+                <div class="inline-flex rounded-lg bg-gray-100 p-1">
+                    <button id="langJa" class="px-4 py-2 rounded-md bg-white shadow-sm font-medium text-sm transition">
+                        日本語
+                    </button>
+                    <button id="langEn" class="px-4 py-2 rounded-md font-medium text-sm text-gray-600 transition">
+                        English
+                    </button>
+                </div>
+            </div>
+
+            <!-- Concern Selection -->
+            <div class="mb-6">
+                <label class="block text-sm font-semibold mb-3 text-gray-700 text-center">
+                    <span id="labelConcern">今、気になっていることは？</span>
+                </label>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <button class="concern-btn px-4 py-3 rounded-lg border-2 border-pink-300 bg-pink-50 text-pink-700 font-medium text-sm" data-concern="relationships">
+                        <div class="text-2xl mb-1">👥</div>
+                        <div id="concernRelationships">人間関係</div>
+                    </button>
+                    <button class="concern-btn px-4 py-3 rounded-lg border-2 border-gray-300 bg-white text-gray-700 font-medium text-sm" data-concern="career">
+                        <div class="text-2xl mb-1">💼</div>
+                        <div id="concernCareer">仕事・キャリア</div>
+                    </button>
+                    <button class="concern-btn px-4 py-3 rounded-lg border-2 border-gray-300 bg-white text-gray-700 font-medium text-sm" data-concern="money">
+                        <div class="text-2xl mb-1">💰</div>
+                        <div id="concernMoney">お金・経済的不安</div>
+                    </button>
+                    <button class="concern-btn px-4 py-3 rounded-lg border-2 border-gray-300 bg-white text-gray-700 font-medium text-sm" data-concern="health">
+                        <div class="text-2xl mb-1">🏃</div>
+                        <div id="concernHealth">健康・生活習慣</div>
+                    </button>
+                    <button class="concern-btn px-4 py-3 rounded-lg border-2 border-gray-300 bg-white text-gray-700 font-medium text-sm" data-concern="purpose">
+                        <div class="text-2xl mb-1">🎯</div>
+                        <div id="concernPurpose">人生の意味・目的</div>
+                    </button>
+                    <button class="concern-btn px-4 py-3 rounded-lg border-2 border-gray-300 bg-white text-gray-700 font-medium text-sm" data-concern="selfesteem">
+                        <div class="text-2xl mb-1">💪</div>
+                        <div id="concernSelfesteem">自己肯定感</div>
+                    </button>
+                    <button class="concern-btn px-4 py-3 rounded-lg border-2 border-gray-300 bg-white text-gray-700 font-medium text-sm" data-concern="balance">
+                        <div class="text-2xl mb-1">⚖️</div>
+                        <div id="concernBalance">ワークライフバランス</div>
+                    </button>
+                    <button class="concern-btn px-4 py-3 rounded-lg border-2 border-gray-300 bg-white text-gray-700 font-medium text-sm" data-concern="future">
+                        <div class="text-2xl mb-1">🔮</div>
+                        <div id="concernFuture">将来への不安</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Generate Button -->
+            <button 
+                id="generateBtn" 
+                class="w-full bg-gradient-to-r from-pink-600 to-orange-600 text-white py-4 rounded-lg font-semibold text-lg shadow-lg hover:shadow-xl transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                <span id="btnText">8つのヒントを受け取る ✨</span>
+            </button>
+
+            <!-- Info -->
+            <div class="mt-4 p-4 bg-blue-50 rounded-lg text-sm">
+                <p class="text-blue-800 text-xs leading-relaxed text-center" id="infoText">
+                    幸福度研究の第一人者たちから、それぞれ1つずつヒントが届きます。<br>
+                    気になったヒントをタップすると詳しく表示されます。
+                </p>
+            </div>
+        </div>
+
+        <!-- Insights Grid -->
+        <div id="insightsGrid" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 fade-in">
+            <!-- Insight cards will be inserted here -->
+        </div>
+
+        <!-- Closing Message -->
+        <div id="closingMessage" class="hidden card rounded-2xl shadow-2xl p-8 mt-6 text-center fade-in">
+            <div class="text-sm text-gray-600 mb-2" id="closingLabel">💫</div>
+            <div class="text-lg leading-relaxed text-gray-800" id="closingText"></div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // 幸福度研究のデータベース
+        // ========================================
+        const happinessDatabase = [
+            // ポジティブ心理学 - マーティン・セリグマン
+            {
+                source: 'seligman',
+                text_ja: "幸福には3つの要素がある。ポジティブな感情、没頭（フロー）、そして意味。この3つのバランスが大切だ。",
+                text_en: "There are three elements to happiness: positive emotion, engagement (flow), and meaning. Balance among these three is key.",
+                author: "マーティン・セリグマン / Martin Seligman",
+                book: "『ポジティブ心理学の挑戦』/ Flourish",
+                keywords: ["幸福", "意味", "目的", "充実", "happiness", "meaning", "purpose", "fulfillment", "engagement"]
+            },
+            {
+                source: 'seligman',
+                text_ja: "過去の失敗ではなく、未来の可能性に焦点を当てよう。楽観主義は学習できるスキルだ。",
+                text_en: "Focus on future possibilities, not past failures. Optimism is a learnable skill.",
+                author: "マーティン・セリグマン / Martin Seligman",
+                book: "『オプティミストはなぜ成功するか』/ Learned Optimism",
+                keywords: ["楽観", "未来", "希望", "成長", "optimism", "future", "hope", "growth"]
+            },
+            {
+                source: 'seligman',
+                text_ja: "あなたの強みを使って生きる時、最も深い充実感を得られる。弱みを直すことより、強みを活かすことに集中しよう。",
+                text_en: "You feel most fulfilled when using your strengths. Focus on leveraging strengths rather than fixing weaknesses.",
+                author: "マーティン・セリグマン / Martin Seligman",
+                book: "『ポジティブ心理学の挑戦』/ Flourish",
+                keywords: ["強み", "才能", "充実", "成長", "strengths", "talent", "fulfillment", "growth"]
+            },
+            {
+                source: 'seligman',
+                text_ja: "感謝の実践は、幸福度を高める最も効果的な方法の一つだ。毎日3つの良いことを書き出してみよう。",
+                text_en: "Practicing gratitude is one of the most effective ways to increase happiness. Write down three good things each day.",
+                author: "マーティン・セリグマン / Martin Seligman",
+                book: "『ポジティブ心理学の挑戦』/ Flourish",
+                keywords: ["感謝", "幸福", "習慣", "実践", "gratitude", "happiness", "habits", "practice"]
+            },
+            {
+                source: 'seligman',
+                text_ja: "人生の意味は、自分より大きな何かに貢献することから生まれる。",
+                text_en: "Meaning in life comes from contributing to something larger than yourself.",
+                author: "マーティン・セリグマン / Martin Seligman",
+                book: "『ポジティブ心理学の挑戦』/ Flourish",
+                keywords: ["意味", "目的", "貢献", "繋がり", "meaning", "purpose", "contribution", "connection"]
+            },
+            {
+                source: 'seligman',
+                text_ja: "楽観主義者は、悪い出来事を一時的で限定的だと考える。悲観主義者は、永続的で全般的だと考える。",
+                text_en: "Optimists see bad events as temporary and specific. Pessimists see them as permanent and pervasive.",
+                author: "マーティン・セリグマン / Martin Seligman",
+                book: "『オプティミストはなぜ成功するか』/ Learned Optimism",
+                keywords: ["楽観", "視点", "思考", "解釈", "optimism", "perspective", "thinking", "interpretation"]
+            },
+            {
+                source: 'seligman',
+                text_ja: "達成感は、困難な目標を達成した時に最も強く感じられる。簡単すぎる目標では、真の満足は得られない。",
+                text_en: "Achievement is most deeply felt when reaching difficult goals. Easy goals don't bring true satisfaction.",
+                author: "マーティン・セリグマン / Martin Seligman",
+                book: "『ポジティブ心理学の挑戦』/ Flourish",
+                keywords: ["達成", "目標", "挑戦", "成長", "achievement", "goals", "challenge", "growth"]
+            },
+            {
+                source: 'seligman',
+                text_ja: "良い人間関係は、幸福の最も重要な要素の一つだ。一人では幸せになれない。",
+                text_en: "Good relationships are one of the most important elements of happiness. You cannot be happy alone.",
+                author: "マーティン・セリグマン / Martin Seligman",
+                book: "『ポジティブ心理学の挑戦』/ Flourish",
+                keywords: ["人間関係", "繋がり", "幸福", "愛", "relationships", "connection", "happiness", "love"]
+            },
+            {
+                source: 'seligman',
+                text_ja: "失敗を学習の機会と捉える人は、失敗を恐れて行動しない人より、はるかに成功する。",
+                text_en: "Those who see failure as a learning opportunity succeed far more than those who fear it and don't act.",
+                author: "マーティン・セリグマン / Martin Seligman",
+                book: "『オプティミストはなぜ成功するか』/ Learned Optimism",
+                keywords: ["失敗", "学習", "成長", "勇気", "failure", "learning", "growth", "courage"]
+            },
+            {
+                source: 'seligman',
+                text_ja: "幸福は目的地ではなく、旅の過程だ。完璧な状態を待つのではなく、今この瞬間を楽しもう。",
+                text_en: "Happiness is not a destination but a journey. Don't wait for perfection; enjoy this moment now.",
+                author: "マーティン・セリグマン / Martin Seligman",
+                book: "『ポジティブ心理学の挑戦』/ Flourish",
+                keywords: ["幸福", "今", "プロセス", "喜び", "happiness", "now", "process", "joy"]
+            },
+
+            // フロー理論 - ミハイ・チクセントミハイ
+            {
+                source: 'csikszentmihalyi',
+                text_ja: "最高の幸福は、挑戦とスキルが完璧にバランスした時に訪れる。それがフロー状態だ。",
+                text_en: "The best moments come when challenge and skill are perfectly balanced. That is the flow state.",
+                author: "ミハイ・チクセントミハイ / Mihaly Csikszentmihalyi",
+                book: "『フロー体験』/ Flow",
+                keywords: ["没頭", "集中", "充実", "仕事", "flow", "focus", "fulfillment", "work", "engagement"]
+            },
+            {
+                source: 'csikszentmihalyi',
+                text_ja: "幸福は結果ではなく、プロセスだ。今この瞬間に完全に没頭することが鍵となる。",
+                text_en: "Happiness is not a result, but a process. The key is complete immersion in the present moment.",
+                author: "ミハイ・チクセントミハイ / Mihaly Csikszentmihalyi",
+                book: "『フロー体験』/ Flow",
+                keywords: ["今", "プロセス", "瞬間", "集中", "present", "process", "moment", "focus"]
+            },
+            {
+                source: 'csikszentmihalyi',
+                text_ja: "フロー状態では、自我が消え、時間の感覚がなくなる。これが人生で最も充実した瞬間だ。",
+                text_en: "In flow, the ego disappears and time dissolves. These are life's most fulfilling moments.",
+                author: "ミハイ・チクセントミハイ / Mihaly Csikszentmihalyi",
+                book: "『フロー体験』/ Flow",
+                keywords: ["没頭", "充実", "忘我", "喜び", "flow", "fulfillment", "transcendence", "joy"]
+            },
+            {
+                source: 'csikszentmihalyi',
+                text_ja: "仕事を義務ではなく、フローを生み出す機会として捉え直そう。",
+                text_en: "Reframe work not as obligation, but as an opportunity to create flow.",
+                author: "ミハイ・チクセントミハイ / Mihaly Csikszentmihalyi",
+                book: "『フロー体験』/ Flow",
+                keywords: ["仕事", "視点", "充実", "意味", "work", "perspective", "fulfillment", "meaning"]
+            },
+            {
+                source: 'csikszentmihalyi',
+                text_ja: "明確な目標と即座のフィードバックが、フロー体験を生み出す。曖昧さは集中を妨げる。",
+                text_en: "Clear goals and immediate feedback create flow. Ambiguity disrupts focus.",
+                author: "ミハイ・チクセントミハイ / Mihaly Csikszentmihalyi",
+                book: "『フロー体験』/ Flow",
+                keywords: ["目標", "フィードバック", "明確", "集中", "goals", "feedback", "clarity", "focus"]
+            },
+            {
+                source: 'csikszentmihalyi',
+                text_ja: "退屈と不安の間に、フローの狭い通路がある。そこを見つけることが幸福への鍵だ。",
+                text_en: "Between boredom and anxiety lies the narrow channel of flow. Finding it is the key to happiness.",
+                author: "ミハイ・チクセントミハイ / Mihaly Csikszentmihalyi",
+                book: "『フロー体験』/ Flow",
+                keywords: ["バランス", "挑戦", "スキル", "幸福", "balance", "challenge", "skill", "happiness"]
+            },
+            {
+                source: 'csikszentmihalyi',
+                text_ja: "受動的な娯楽よりも、能動的な活動の方が、はるかに深い喜びをもたらす。",
+                text_en: "Active engagement brings far deeper joy than passive entertainment.",
+                author: "ミハイ・チクセントミハイ / Mihaly Csikszentmihalyi",
+                book: "『フロー体験』/ Flow",
+                keywords: ["能動", "活動", "充実", "喜び", "active", "engagement", "fulfillment", "joy"]
+            },
+            {
+                source: 'csikszentmihalyi',
+                text_ja: "創造性は、フロー状態で最も発揮される。リラックスしすぎても、緊張しすぎてもダメだ。",
+                text_en: "Creativity flourishes most in flow state. Not too relaxed, not too tense.",
+                author: "ミハイ・チクセントミハイ / Mihaly Csikszentmihalyi",
+                book: "『フロー体験』/ Flow",
+                keywords: ["創造性", "バランス", "集中", "充実", "creativity", "balance", "focus", "fulfillment"]
+            },
+            {
+                source: 'csikszentmihalyi',
+                text_ja: "自分のスキルを少し超える挑戦を選ぼう。それが成長とフローを生む。",
+                text_en: "Choose challenges slightly beyond your skills. That creates growth and flow.",
+                author: "ミハイ・チクセントミハイ / Mihaly Csikszentmihalyi",
+                book: "『フロー体験』/ Flow",
+                keywords: ["挑戦", "成長", "スキル", "バランス", "challenge", "growth", "skill", "balance"]
+            },
+            {
+                source: 'csikszentmihalyi',
+                text_ja: "フローを経験するほど、人生はより複雑で豊かになる。単純な快楽では満足できなくなる。",
+                text_en: "The more you experience flow, the richer your life becomes. Simple pleasures no longer satisfy.",
+                author: "ミハイ・チクセントミハイ / Mihaly Csikszentmiハイ",
+                book: "『フロー体験』/ Flow",
+                keywords: ["成長", "複雑性", "豊かさ", "充実", "growth", "complexity", "richness", "fulfillment"]
+            },
+
+            // 幸福の科学 - ソニア・リュボミアスキー
+            {
+                source: 'lyubomirsky',
+                text_ja: "幸福の40%は意図的な活動で決まる。感謝の実践、親切な行動、強みを活かすことが効果的だ。",
+                text_en: "40% of happiness comes from intentional activities. Practicing gratitude, kindness, and using your strengths are effective.",
+                author: "ソニア・リュボミアスキー / Sonja Lyubomirsky",
+                book: "『幸せがずっと続く12の行動習慣』/ The How of Happiness",
+                keywords: ["感謝", "親切", "行動", "習慣", "gratitude", "kindness", "action", "habits"]
+            },
+            {
+                source: 'lyubomirsky',
+                text_ja: "他人と比較するのをやめよう。あなた自身の進歩に焦点を当てることが、持続的な幸福につながる。",
+                text_en: "Stop comparing yourself to others. Focus on your own progress for lasting happiness.",
+                author: "ソニア・リュボミアスキー / Sonja Lyubomirsky",
+                book: "『幸せがずっと続く12の行動習慣』/ The How of Happiness",
+                keywords: ["比較", "自己", "成長", "進歩", "comparison", "self", "growth", "progress"]
+            },
+            {
+                source: 'lyubomirsky',
+                text_ja: "毎週5回、親切な行動を意識的に行うだけで、幸福度が大幅に上がる。",
+                text_en: "Consciously performing five acts of kindness per week significantly increases happiness.",
+                author: "ソニア・リュボミアスキー / Sonja Lyubomirsky",
+                book: "『幸せがずっと続く12の行動習慣』/ The How of Happiness",
+                keywords: ["親切", "行動", "習慣", "幸福", "kindness", "action", "habits", "happiness"]
+            },
+            {
+                source: 'lyubomirsky',
+                text_ja: "幸福度の50%は遺伝で決まるが、残りの50%はあなたの選択次第だ。遺伝を言い訳にしない。",
+                text_en: "50% of happiness is genetic, but the other 50% is your choice. Don't use genetics as an excuse.",
+                author: "ソニア・リュボミアスキー / Sonja Lyubomirsky",
+                book: "『幸せがずっと続く12の行動習慣』/ The How of Happiness",
+                keywords: ["選択", "責任", "行動", "自己", "choice", "responsibility", "action", "self"]
+            },
+            {
+                source: 'lyubomirsky',
+                text_ja: "目標に向かって努力するプロセスが幸福をもたらす。目標達成そのものではない。",
+                text_en: "The process of striving toward goals brings happiness, not the achievement itself.",
+                author: "ソニア・リュボミアスキー / Sonja Lyubomirsky",
+                book: "『幸せがずっと続く12の行動習慣』/ The How of Happiness",
+                keywords: ["目標", "プロセス", "努力", "充実", "goals", "process", "effort", "fulfillment"]
+            },
+            {
+                source: 'lyubomirsky',
+                text_ja: "ポジティブな経験を他人と分かち合うことで、その喜びは倍増する。",
+                text_en: "Sharing positive experiences with others doubles the joy.",
+                author: "ソニア・リュボミアスキー / Sonja Lyubomirsky",
+                book: "『幸せがずっと続く12の行動習慣』/ The How of Happiness",
+                keywords: ["共有", "喜び", "繋がり", "幸福", "sharing", "joy", "connection", "happiness"]
+            },
+            {
+                source: 'lyubomirsky',
+                text_ja: "幸福な活動を習慣化しすぎると、効果が薄れる。時々変化を加えることが重要だ。",
+                text_en: "Over-routinizing happiness activities reduces their effect. Variety is important.",
+                author: "ソニア・リュボミアスキー / Sonja Lyubomirsky",
+                book: "『幸せがずっと続く12の行動習慣』/ The How of Happiness",
+                keywords: ["変化", "多様性", "習慣", "効果", "variety", "diversity", "habits", "effectiveness"]
+            },
+            {
+                source: 'lyubomirsky',
+                text_ja: "過去の良い思い出を意図的に思い出す時間を作ろう。それが幸福度を高める。",
+                text_en: "Intentionally recall good memories. This increases happiness.",
+                author: "ソニア・リュボミアスキー / Sonja Lyubomirsky",
+                book: "『幸せがずっと続く12の行動習慣』/ The How of Happiness",
+                keywords: ["記憶", "思い出", "感謝", "喜び", "memory", "remembering", "gratitude", "joy"]
+            },
+            {
+                source: 'lyubomirsky',
+                text_ja: "他人の成功を心から祝福できる人は、自分自身も幸福になる。",
+                text_en: "Those who genuinely celebrate others' success become happier themselves.",
+                author: "ソニア・リュボミアスキー / Sonja Lyubomirsky",
+                book: "『幸せがずっと続く12の行動習慣』/ The How of Happiness",
+                keywords: ["祝福", "共感", "喜び", "繋がり", "celebration", "empathy", "joy", "connection"]
+            },
+            {
+                source: 'lyubomirsky',
+                text_ja: "幸福になるための努力そのものが、幸福をもたらす。完璧な状態を待つ必要はない。",
+                text_en: "The effort to become happier itself brings happiness. You don't need to wait for perfection.",
+                author: "ソニア・リュボミアスキー / Sonja Lyubomirsky",
+                book: "『幸せがずっと続く12の行動習慣』/ The How of Happiness",
+                keywords: ["努力", "プロセス", "今", "行動", "effort", "process", "now", "action"]
+            },
+
+            // 幸福の習慣 - グレッチェン・ルービン
+            {
+                source: 'rubin',
+                text_ja: "小さな習慣の積み重ねが、大きな幸福をもたらす。完璧を目指すのではなく、少しずつ改善していこう。",
+                text_en: "Small habits accumulate into great happiness. Aim for progress, not perfection.",
+                author: "グレッチェン・ルービン / Gretchen Rubin",
+                book: "『幸福の習慣』/ The Happiness Project",
+                keywords: ["習慣", "小さな", "改善", "日常", "habits", "small", "improvement", "daily"]
+            },
+            {
+                source: 'rubin',
+                text_ja: "自分自身を知ることが幸福の第一歩。あなたにとっての幸福は、他人とは違っていい。",
+                text_en: "Knowing yourself is the first step to happiness. Your happiness can be different from others'.",
+                author: "グレッチェン・ルービン / Gretchen Rubin",
+                book: "『幸福の習慣』/ The Happiness Project",
+                keywords: ["自己理解", "個性", "自分", "独自", "self-knowledge", "individuality", "self", "unique"]
+            },
+            {
+                source: 'rubin',
+                text_ja: "部屋を片付けることは、心を片付けることだ。外部の秩序が内面の平和をもたらす。",
+                text_en: "Tidying your room is tidying your mind. External order brings inner peace.",
+                author: "グレッチェン・ルービン / Gretchen Rubin",
+                book: "『幸福の習慣』/ The Happiness Project",
+                keywords: ["整理", "秩序", "平和", "環境", "tidying", "order", "peace", "environment"]
+            },
+            {
+                source: 'rubin',
+                text_ja: "朝の習慣が、一日の幸福度を左右する。朝を大切にしよう。",
+                text_en: "Morning habits determine your daily happiness. Treasure your mornings.",
+                author: "グレッチェン・ルービン / Gretchen Rubin",
+                book: "『幸福の習慣』/ The Happiness Project",
+                keywords: ["朝", "習慣", "日常", "始まり", "morning", "habits", "daily", "beginning"]
+            },
+            {
+                source: 'rubin',
+                text_ja: "完璧主義は幸福の敵だ。80%の出来で満足できるようになろう。",
+                text_en: "Perfectionism is the enemy of happiness. Learn to be satisfied with 80%.",
+                author: "グレッチェン・ルービン / Gretchen Rubin",
+                book: "『幸福の習慣』/ The Happiness Project",
+                keywords: ["完璧主義", "満足", "受容", "バランス", "perfectionism", "satisfaction", "acceptance", "balance"]
+            },
+            {
+                source: 'rubin',
+                text_ja: "「いつか」ではなく「今」を生きよう。幸福を先延ばしにしてはいけない。",
+                text_en: "Live 'now,' not 'someday.' Don't postpone happiness.",
+                author: "グレッチェン・ルービン / Gretchen Rubin",
+                book: "『幸福の習慣』/ The Happiness Project",
+                keywords: ["今", "先延ばし", "行動", "現在", "now", "procrastination", "action", "present"]
+            },
+            {
+                source: 'rubin',
+                text_ja: "エネルギーを高く保つことが、幸福の基盤だ。睡眠、運動、栄養を大切にしよう。",
+                text_en: "Maintaining high energy is the foundation of happiness. Value sleep, exercise, and nutrition.",
+                author: "グレッチェン・ルービン / Gretchen Rubin",
+                book: "『幸福の習慣』/ The Happiness Project",
+                keywords: ["エネルギー", "健康", "睡眠", "運動", "energy", "health", "sleep", "exercise"]
+            },
+            {
+                source: 'rubin',
+                text_ja: "人に親切にすることは、自分自身を幸せにする最も確実な方法だ。",
+                text_en: "Being kind to others is the surest way to make yourself happy.",
+                author: "グレッチェン・ルービン / Gretchen Rubin",
+                book: "『幸福の習慣』/ The Happiness Project",
+                keywords: ["親切", "思いやり", "幸福", "繋がり", "kindness", "compassion", "happiness", "connection"]
+            },
+            {
+                source: 'rubin',
+                text_ja: "楽しいことをする時間を、スケジュールに組み込もう。「時間があれば」では永遠にできない。",
+                text_en: "Schedule time for fun. 'When I have time' means never.",
+                author: "グレッチェン・ルービン / Gretchen Rubin",
+                book: "『幸福の習慣』/ The Happiness Project",
+                keywords: ["楽しみ", "時間", "計画", "喜び", "fun", "time", "planning", "joy"]
+            },
+            {
+                source: 'rubin',
+                text_ja: "感謝の気持ちを表現しよう。心の中で思うだけでは不十分だ。言葉にすることが大切。",
+                text_en: "Express gratitude. Thinking it isn't enough. Words matter.",
+                author: "グレッチェン・ルービン / Gretchen Rubin",
+                book: "『幸福の習慣』/ The Happiness Project",
+                keywords: ["感謝", "表現", "言葉", "繋がり", "gratitude", "expression", "words", "connection"]
+            },
+
+            // アドラー心理学 - 岸見一郎
+            {
+                source: 'adler',
+                text_ja: "他者からの承認を求めるのではなく、自分の人生を生きる勇気を持とう。幸福は勇気から生まれる。",
+                text_en: "Don't seek approval from others. Have the courage to live your own life. Happiness comes from courage.",
+                author: "アルフレッド・アドラー / Alfred Adler",
+                book: "『幸せになる勇気』/ The Courage to Be Happy",
+                keywords: ["勇気", "承認", "自己", "自由", "courage", "approval", "self", "freedom"]
+            },
+            {
+                source: 'adler',
+                text_ja: "すべての悩みは対人関係から生まれる。しかし、幸福もまた対人関係から生まれる。",
+                text_en: "All problems arise from interpersonal relationships. But so does all happiness.",
+                author: "アルフレッド・アドラー / Alfred Adler",
+                book: "『嫌われる勇気』/ The Courage to Be Disliked",
+                keywords: ["人間関係", "繋がり", "対人", "関係", "relationships", "connection", "interpersonal", "relations"]
+            },
+            {
+                source: 'adler',
+                text_ja: "過去は関係ない。大切なのは、今この瞬間からどう生きるかだ。",
+                text_en: "The past doesn't matter. What matters is how you live from this moment on.",
+                author: "アルフレッド・アドラー / Alfred Adler",
+                book: "『嫌われる勇気』/ The Courage to Be Disliked",
+                keywords: ["今", "過去", "選択", "自由", "now", "past", "choice", "freedom"]
+            },
+            {
+                source: 'adler',
+                text_ja: "人は変わることができる。そして、幸福になることを選べる。",
+                text_en: "People can change. And they can choose to be happy.",
+                author: "アルフレッド・アドラー / Alfred Adler",
+                book: "『幸せになる勇気』/ The Courage to Be Happy",
+                keywords: ["変化", "選択", "幸福", "自由", "change", "choice", "happiness", "freedom"]
+            },
+            {
+                source: 'adler',
+                text_ja: "他者を競争相手だと考えるのをやめよう。仲間だと考えることが、幸福への第一歩だ。",
+                text_en: "Stop seeing others as competitors. See them as companions - that's the first step to happiness.",
+                author: "アルフレッド・アドラー / Alfred Adler",
+                book: "『嫌われる勇気』/ The Courage to Be Disliked",
+                keywords: ["競争", "協力", "繋がり", "仲間", "competition", "cooperation", "connection", "companions"]
+            },
+            {
+                source: 'adler',
+                text_ja: "自分には価値があると思えること、それが幸福の源泉だ。",
+                text_en: "Feeling that you have value is the source of happiness.",
+                author: "アルフレッド・アドラー / Alfred Adler",
+                book: "『幸せになる勇気』/ The Courage to Be Happy",
+                keywords: ["自己肯定", "価値", "自尊心", "幸福", "self-worth", "value", "self-esteem", "happiness"]
+            },
+            {
+                source: 'adler',
+                text_ja: "貢献感が、幸福をもたらす。誰かの役に立っていると感じることが大切だ。",
+                text_en: "The sense of contribution brings happiness. Feeling useful to someone matters.",
+                author: "アルフレッド・アドラー / Alfred Adler",
+                book: "『幸せになる勇気』/ The Courage to Be Happy",
+                keywords: ["貢献", "役立つ", "意味", "繋がり", "contribution", "usefulness", "meaning", "connection"]
+            },
+            {
+                source: 'adler',
+                text_ja: "課題の分離をしよう。他人の課題に踏み込まず、自分の課題に集中する。",
+                text_en: "Separate tasks. Don't intrude on others' tasks; focus on your own.",
+                author: "アルフレッド・アドラー / Alfred Adler",
+                book: "『嫌われる勇気』/ The Courage to Be Disliked",
+                keywords: ["境界", "自由", "責任", "平和", "boundaries", "freedom", "responsibility", "peace"]
+            },
+            {
+                source: 'adler',
+                text_ja: "嫌われる勇気を持つことが、自由に生きる第一歩だ。",
+                text_en: "Having the courage to be disliked is the first step to living freely.",
+                author: "アルフレッド・アドラー / Alfred Adler",
+                book: "『嫌われる勇気』/ The Courage to Be Disliked",
+                keywords: ["勇気", "自由", "承認", "独立", "courage", "freedom", "approval", "independence"]
+            },
+            {
+                source: 'adler',
+                text_ja: "今、ここを真剣に生きよう。それが幸福への唯一の道だ。",
+                text_en: "Live seriously in the here and now. That's the only path to happiness.",
+                author: "アルフレッド・アドラー / Alfred Adler",
+                book: "『幸せになる勇気』/ The Courage to Be Happy",
+                keywords: ["今", "真剣", "生きる", "幸福", "now", "earnest", "living", "happiness"]
+            },
+
+            // マインドフルネス - ジョン・カバットジン
+            {
+                source: 'kabatzinn',
+                text_ja: "今この瞬間に完全に存在することが、ストレスを減らし、幸福を増やす最も強力な方法だ。",
+                text_en: "Being fully present in this moment is the most powerful way to reduce stress and increase happiness.",
+                author: "ジョン・カバットジン / Jon Kabat-Zinn",
+                book: "『マインドフルネスストレス低減法』/ Full Catastrophe Living",
+                keywords: ["今", "マインドフルネス", "瞑想", "ストレス", "present", "mindfulness", "meditation", "stress"]
+            },
+            {
+                source: 'kabatzinn',
+                text_ja: "呼吸に意識を向けるだけで、心は静まり、明晰さが戻ってくる。いつでもどこでもできる実践だ。",
+                text_en: "Simply paying attention to your breath calms the mind and restores clarity. A practice you can do anytime, anywhere.",
+                author: "ジョン・カバットジン / Jon Kabat-Zinn",
+                book: "『マインドフルネスストレス低減法』/ Full Catastrophe Living",
+                keywords: ["呼吸", "瞑想", "静けさ", "実践", "breath", "meditation", "calm", "practice"]
+            },
+            {
+                source: 'kabatzinn',
+                text_ja: "判断せずに、ただ観察する。それがマインドフルネスの本質だ。",
+                text_en: "Observe without judgment. That is the essence of mindfulness.",
+                author: "ジョン・カバットジン / Jon Kabat-Zinn",
+                book: "『マインドフルネスストレス低減法』/ Full Catastrophe Living",
+                keywords: ["観察", "判断", "受容", "瞑想", "observation", "judgment", "acceptance", "meditation"]
+            },
+            {
+                source: 'kabatzinn',
+                text_ja: "痛みは避けられないが、苦しみは選択だ。苦しみは、痛みへの抵抗から生まれる。",
+                text_en: "Pain is inevitable, but suffering is optional. Suffering comes from resisting pain.",
+                author: "ジョン・カバットジン / Jon Kabat-Zinn",
+                book: "『マインドフルネスストレス低減法』/ Full Catastrophe Living",
+                keywords: ["痛み", "苦しみ", "受容", "抵抗", "pain", "suffering", "acceptance", "resistance"]
+            },
+            {
+                source: 'kabatzinn',
+                text_ja: "マインドフルネスは、特別な状態を目指すものではない。普通の瞬間に完全に目覚めることだ。",
+                text_en: "Mindfulness isn't about reaching a special state. It's about being fully awake to ordinary moments.",
+                author: "ジョン・カバットジン / Jon Kabat-Zinn",
+                book: "『マインドフルネスストレス低減法』/ Full Catastrophe Living",
+                keywords: ["日常", "目覚め", "普通", "意識", "daily", "awakening", "ordinary", "awareness"]
+            },
+            {
+                source: 'kabatzinn',
+                text_ja: "食べる時は食べ、歩く時は歩く。どんな行為も瞑想になり得る。",
+                text_en: "When eating, eat. When walking, walk. Any activity can become meditation.",
+                author: "ジョン・カバットジン / Jon Kabat-Zinn",
+                book: "『マインドフルネスストレス低減法』/ Full Catastrophe Living",
+                keywords: ["日常", "瞑想", "実践", "今", "daily", "meditation", "practice", "now"]
+            },
+            {
+                source: 'kabatzinn',
+                text_ja: "心は常に過去か未来を彷徨っている。今ここに戻ってくる練習をしよう。",
+                text_en: "The mind constantly wanders to past or future. Practice returning to here and now.",
+                author: "ジョン・カバットジン / Jon Kabat-Zinn",
+                book: "『マインドフルネスストレス低減法』/ Full Catastrophe Living",
+                keywords: ["今", "過去", "未来", "集中", "now", "past", "future", "focus"]
+            },
+            {
+                source: 'kabatzinn',
+                text_ja: "ストレスは敵ではない。それに気づき、受け入れることで、力を失う。",
+                text_en: "Stress isn't the enemy. When you notice and accept it, it loses its power.",
+                author: "ジョン・カバットジン / Jon Kabat-Zinn",
+                book: "『マインドフルネスストレス低減法』/ Full Catastrophe Living",
+                keywords: ["ストレス", "受容", "気づき", "平和", "stress", "acceptance", "awareness", "peace"]
+            },
+            {
+                source: 'kabatzinn',
+                text_ja: "1日10分の瞑想が、人生を変える。小さな実践が、大きな変化をもたらす。",
+                text_en: "10 minutes of daily meditation can transform your life. Small practice brings big change.",
+                author: "ジョン・カバットジン / Jon Kabat-Zinn",
+                book: "『マインドフルネスストレス低減法』/ Full Catastrophe Living",
+                keywords: ["瞑想", "習慣", "変化", "実践", "meditation", "habits", "change", "practice"]
+            },
+            {
+                source: 'kabatzinn',
+                text_ja: "あなたはすでに完全だ。何かを加える必要はない。ただ、それに気づくだけでいい。",
+                text_en: "You are already whole. You don't need to add anything. Just realize it.",
+                author: "ジョン・カバットジン / Jon Kabat-Zinn",
+                book: "『マインドフルネスストレス低減法』/ Full Catastrophe Living",
+                keywords: ["完全", "受容", "気づき", "平和", "wholeness", "acceptance", "awareness", "peace"]
+            },
+
+            // 人間関係の科学 - ロバート・ウォルディンガー
+            {
+                source: 'waldinger',
+                text_ja: "75年にわたる研究が示すのは、良い人間関係こそが幸福と健康の最大の要因だということだ。",
+                text_en: "75 years of research shows that good relationships are the biggest factor in happiness and health.",
+                author: "ロバート・ウォルディンガー / Robert Waldinger",
+                book: "ハーバード成人発達研究 / Harvard Study of Adult Development",
+                keywords: ["人間関係", "繋がり", "健康", "幸福", "relationships", "connection", "health", "happiness"]
+            },
+            {
+                source: 'waldinger',
+                text_ja: "関係の質が重要だ。深い繋がりを持つ数人の友人が、多くの表面的な知り合いよりも幸福をもたらす。",
+                text_en: "Quality of relationships matters. A few deep connections bring more happiness than many superficial acquaintances.",
+                author: "ロバート・ウォルディンガー / Robert Waldinger",
+                book: "ハーバード成人発達研究 / Harvard Study of Adult Development",
+                keywords: ["深い", "繋がり", "質", "友人", "deep", "connection", "quality", "friends"]
+            },
+            {
+                source: 'waldinger',
+                text_ja: "孤独は喫煙と同じくらい健康に悪い。人との繋がりは、生きるために必要不可欠だ。",
+                text_en: "Loneliness is as harmful to health as smoking. Human connection is essential for life.",
+                author: "ロバート・ウォルディンガー / Robert Waldinger",
+                book: "ハーバード成人発達研究 / Harvard Study of Adult Development",
+                keywords: ["孤独", "繋がり", "健康", "必要", "loneliness", "connection", "health", "essential"]
+            },
+            {
+                source: 'waldinger',
+                text_ja: "お金や名声ではなく、愛情深い関係が、長期的な幸福を予測する最良の指標だ。",
+                text_en: "Not money or fame, but loving relationships are the best predictor of long-term happiness.",
+                author: "ロバート・ウォルディンガー / Robert Waldinger",
+                book: "ハーバード成人発達研究 / Harvard Study of Adult Development",
+                keywords: ["関係", "愛", "幸福", "長期", "relationships", "love", "happiness", "long-term"]
+            },
+            {
+                source: 'waldinger',
+                text_ja: "紛争のない関係ではなく、紛争を乗り越えられる関係が、幸福をもたらす。",
+                text_en: "Not conflict-free relationships, but relationships that can overcome conflict bring happiness.",
+                author: "ロバート・ウォルディンガー / Robert Waldinger",
+                book: "ハーバード成人発達研究 / Harvard Study of Adult Development",
+                keywords: ["紛争", "解決", "強さ", "繋がり", "conflict", "resolution", "strength", "connection"]
+            },
+            {
+                source: 'waldinger',
+                text_ja: "50代での満足度が、80代での健康を予測する。関係への投資は、将来への投資だ。",
+                text_en: "Satisfaction in your 50s predicts health in your 80s. Investing in relationships is investing in your future.",
+                author: "ロバート・ウォルディンガー / Robert Waldinger",
+                book: "ハーバード成人発達研究 / Harvard Study of Adult Development",
+                keywords: ["投資", "将来", "健康", "関係", "investment", "future", "health", "relationships"]
+            },
+            {
+                source: 'waldinger',
+                text_ja: "信頼できる人がいると感じることが、ストレスから脳を守る。",
+                text_en: "Feeling you have someone to count on protects your brain from stress.",
+                author: "ロバート・ウォルディンガー / Robert Waldinger",
+                book: "ハーバード成人発達研究 / Harvard Study of Adult Development",
+                keywords: ["信頼", "ストレス", "保護", "安心", "trust", "stress", "protection", "security"]
+            },
+            {
+                source: 'waldinger',
+                text_ja: "幸せな関係は、記憶力の衰えを遅らせる。愛情が脳を守る。",
+                text_en: "Happy relationships slow memory decline. Love protects the brain.",
+                author: "ロバート・ウォルディンガー / Robert Waldinger",
+                book: "ハーバード成人発達研究 / Harvard Study of Adult Development",
+                keywords: ["愛", "記憶", "健康", "保護", "love", "memory", "health", "protection"]
+            },
+            {
+                source: 'waldinger',
+                text_ja: "良い人間関係は、時間をかけて育むものだ。近道はない。",
+                text_en: "Good relationships take time to nurture. There are no shortcuts.",
+                author: "ロバート・ウォルディンガー / Robert Waldinger",
+                book: "ハーバード成人発達研究 / Harvard Study of Adult Development",
+                keywords: ["時間", "育む", "忍耐", "関係", "time", "nurture", "patience", "relationships"]
+            },
+            {
+                source: 'waldinger',
+                text_ja: "人生の最期に重要なのは、富でも名声でもなく、誰と過ごしたかだ。",
+                text_en: "At the end of life, what matters isn't wealth or fame, but who you spent time with.",
+                author: "ロバート・ウォルディンガー / Robert Waldinger",
+                book: "ハーバード成人発達研究 / Harvard Study of Adult Development",
+                keywords: ["人生", "最期", "繋がり", "意味", "life", "end", "connection", "meaning"]
+            },
+
+            // お金と幸福 - ダニエル・カーネマン
+            {
+                source: 'kahneman',
+                text_ja: "お金は基本的な安全が満たされるまでは幸福度を上げるが、それ以上は体験に使う方が効果的だ。",
+                text_en: "Money increases happiness until basic security is met, but beyond that, spending on experiences is more effective.",
+                author: "ダニエル・カーネマン / Daniel Kahneman",
+                book: "『ファスト&スロー』/ Thinking, Fast and Slow",
+                keywords: ["お金", "体験", "安全", "基本", "money", "experience", "security", "basic"]
+            },
+            {
+                source: 'kahneman',
+                text_ja: "将来の自分を過大評価せず、今の幸福も大切にしよう。バランスが鍵だ。",
+                text_en: "Don't overestimate your future self. Value present happiness too. Balance is key.",
+                author: "ダニエル・カーネマン / Daniel Kahneman",
+                book: "『ファスト&スロー』/ Thinking, Fast and Slow",
+                keywords: ["今", "将来", "バランス", "現在", "present", "future", "balance", "now"]
+            },
+            {
+                source: 'kahneman',
+                text_ja: "モノを買うより、体験を買おう。思い出は色褪せず、幸福を長く保つ。",
+                text_en: "Buy experiences, not things. Memories don't fade and keep happiness lasting.",
+                author: "ダニエル・カーネマン / Daniel Kahneman",
+                book: "『ファスト&スロー』/ Thinking, Fast and Slow",
+                keywords: ["体験", "モノ", "思い出", "幸福", "experience", "things", "memories", "happiness"]
+            },
+            {
+                source: 'kahneman',
+                text_ja: "私たちは、ピーク時と最後の瞬間で経験を判断する。プロセス全体ではない。",
+                text_en: "We judge experiences by their peak and end, not the whole process.",
+                author: "ダニエル・カーネマン / Daniel Kahneman",
+                book: "『ファスト&スロー』/ Thinking, Fast and Slow",
+                keywords: ["記憶", "経験", "判断", "認知", "memory", "experience", "judgment", "cognition"]
+            },
+            {
+                source: 'kahneman',
+                text_ja: "幸福には2種類ある。経験している時の幸福と、振り返った時の幸福。両方が大切だ。",
+                text_en: "There are two kinds of happiness: experiencing happiness and remembering happiness. Both matter.",
+                author: "ダニエル・カーネマン / Daniel Kahneman",
+                book: "『ファスト&スロー』/ Thinking, Fast and Slow",
+                keywords: ["幸福", "経験", "記憶", "二種類", "happiness", "experience", "memory", "two kinds"]
+            },
+            {
+                source: 'kahneman',
+                text_ja: "年収7.5万ドルを超えると、お金と日々の幸福の相関は弱くなる。基本的な安全が最も重要だ。",
+                text_en: "Beyond $75,000 annual income, money's correlation with daily happiness weakens. Basic security matters most.",
+                author: "ダニエル・カーネマン / Daniel Kahneman",
+                book: "幸福度研究 / Happiness Research",
+                keywords: ["お金", "収入", "安全", "幸福", "money", "income", "security", "happiness"]
+            },
+            {
+                source: 'kahneman',
+                text_ja: "他人と自分を比較することが、幸福度を下げる最大の要因の一つだ。",
+                text_en: "Comparing yourself to others is one of the biggest factors reducing happiness.",
+                author: "ダニエル・カーネマン / Daniel Kahneman",
+                book: "『ファスト&スロー』/ Thinking, Fast and Slow",
+                keywords: ["比較", "幸福", "他人", "相対", "comparison", "happiness", "others", "relative"]
+            },
+            {
+                source: 'kahneman',
+                text_ja: "時間の使い方が、お金の使い方よりも幸福に大きく影響する。",
+                text_en: "How you spend your time affects happiness more than how you spend money.",
+                author: "ダニエル・カーネマン / Daniel Kahneman",
+                book: "『ファスト&スロー』/ Thinking, Fast and Slow",
+                keywords: ["時間", "お金", "使い方", "幸福", "time", "money", "spending", "happiness"]
+            },
+            {
+                source: 'kahneman',
+                text_ja: "他人のための支出は、自分のための支出より幸福をもたらす。",
+                text_en: "Spending on others brings more happiness than spending on yourself.",
+                author: "ダニエル・カーネマン / Daniel Kahneman",
+                book: "幸福度研究 / Happiness Research",
+                keywords: ["贈与", "他人", "支出", "幸福", "giving", "others", "spending", "happiness"]
+            },
+            {
+                source: 'kahneman',
+                text_ja: "人は幸福になることに、あまり得意ではない。だから科学の助けが必要だ。",
+                text_en: "People aren't very good at being happy. That's why we need science's help.",
+                author: "ダニエル・カーネマン / Daniel Kahneman",
+                book: "『ファスト&スロー』/ Thinking, Fast and Slow",
+                keywords: ["科学", "学習", "智慧", "幸福", "science", "learning", "wisdom", "happiness"]
+            },
+        ];
+
+        // ========================================
+        // 状態管理
+        // ========================================
+        let currentLanguage = 'ja';
+        let selectedConcern = 'relationships';
+        let currentTime = 'morning';
+        let selectedInsights = [];
+
+        // ========================================
+        // 締めくくりのメッセージ
+        // ========================================
+        const closingMessages = {
+            relationships: {
+                morning: {
+                    ja: "人との繋がりは、幸福の源。今日も、大切な人を大切にしてね。",
+                    en: "Connection with others is the source of happiness. Cherish those who matter today."
+                },
+                afternoon: {
+                    ja: "良い関係は、時間をかけて育むもの。焦らず、少しずつで大丈夫。",
+                    en: "Good relationships grow with time. No rush - little by little is fine."
+                },
+                evening: {
+                    ja: "今日出会った人、話した人。それぞれが、あなたの人生を豊かにしているよ。",
+                    en: "Everyone you met today enriches your life in their own way."
+                }
+            },
+            career: {
+                morning: {
+                    ja: "仕事の意味は、あなたが決める。今日も、自分なりの意義を見出していこう。",
+                    en: "You define the meaning of your work. Find your own purpose today."
+                },
+                afternoon: {
+                    ja: "完璧じゃなくていい。今日できることを、できる範囲でやれば十分。",
+                    en: "Perfection isn't needed. What you can do today is enough."
+                },
+                evening: {
+                    ja: "仕事も大切、でもあなた自身も大切。バランスを忘れずに。お疲れさま。",
+                    en: "Work matters, but so do you. Remember balance. Well done today."
+                }
+            },
+            money: {
+                morning: {
+                    ja: "お金は手段。何のために使うか、何を大切にするかを考えよう。",
+                    en: "Money is a tool. Think about what you use it for and what you value."
+                },
+                afternoon: {
+                    ja: "経済的な不安、わかるよ。でも今できる小さな一歩から始めよう。",
+                    en: "Financial worries are real. But start with small steps you can take now."
+                },
+                evening: {
+                    ja: "お金では買えない豊かさも、あなたの周りにあるよ。今日はゆっくり休んで。",
+                    en: "There's richness around you that money can't buy. Rest well tonight."
+                }
+            },
+            health: {
+                morning: {
+                    ja: "健康は習慣の積み重ね。今日も、小さな一歩を大切に。",
+                    en: "Health is built from small habits. Value each small step today."
+                },
+                afternoon: {
+                    ja: "体の声に耳を傾けて。休みたい時は休む、それも大切なケアだよ。",
+                    en: "Listen to your body. Resting when you need it is important care too."
+                },
+                evening: {
+                    ja: "今日も体を動かせたこと、それだけで十分。ゆっくり休んでね。",
+                    en: "Moving your body today was enough. Rest well now."
+                }
+            },
+            purpose: {
+                morning: {
+                    ja: "人生の意味は、日々の小さな選択の中にある。今日も、自分らしく生きよう。",
+                    en: "Life's meaning lies in small daily choices. Live true to yourself today."
+                },
+                afternoon: {
+                    ja: "大きな目的を見つけようとしなくていい。今ここで大切なことに集中して。",
+                    en: "You don't need to find grand purpose. Focus on what matters here and now."
+                },
+                evening: {
+                    ja: "今日を生きたこと、それ自体が意味のあること。よく頑張ったね。",
+                    en: "Living today itself has meaning. You did well."
+                }
+            },
+            selfesteem: {
+                morning: {
+                    ja: "あなたはあなたのままで十分。今日も、自分を大切にしてね。",
+                    en: "You are enough as you are. Be kind to yourself today."
+                },
+                afternoon: {
+                    ja: "完璧じゃない自分を認めよう。それが自己受容の第一歩だよ。",
+                    en: "Accept your imperfect self. That's the first step to self-acceptance."
+                },
+                evening: {
+                    ja: "今日も頑張った自分を褒めてあげて。あなたは素晴らしいよ。",
+                    en: "Praise yourself for today's efforts. You're wonderful."
+                }
+            },
+            balance: {
+                morning: {
+                    ja: "バランスは完璧じゃなくていい。今日は、少しだけ自分の時間を作ってみて。",
+                    en: "Balance doesn't need to be perfect. Make a little time for yourself today."
+                },
+                afternoon: {
+                    ja: "仕事も大切、休息も大切。どちらも、あなたの人生の一部だよ。",
+                    en: "Work matters, rest matters. Both are part of your life."
+                },
+                evening: {
+                    ja: "今日も一日お疲れさま。明日のために、今夜はしっかり休んでね。",
+                    en: "Well done today. Rest well tonight for tomorrow."
+                }
+            },
+            future: {
+                morning: {
+                    ja: "未来は不確かだけど、今日できることに集中しよう。それが未来を作る。",
+                    en: "The future is uncertain, but focus on what you can do today. That builds tomorrow."
+                },
+                afternoon: {
+                    ja: "将来の不安、わかるよ。でも今この瞬間を大切にすることも忘れないで。",
+                    en: "Future worries are real. But don't forget to value this present moment."
+                },
+                evening: {
+                    ja: "明日のことは明日で大丈夫。今夜は、今日を生きたことに感謝して休もう。",
+                    en: "Tomorrow can wait. Tonight, be grateful for today and rest."
+                }
+            }
+        };
+
+        // ========================================
+        // DOM要素
+        // ========================================
+        const langJaBtn = document.getElementById('langJa');
+        const langEnBtn = document.getElementById('langEn');
+        const generateBtn = document.getElementById('generateBtn');
+        const insightsGrid = document.getElementById('insightsGrid');
+
+        // ========================================
+        // 時間帯の自動判定
+        // ========================================
+        function detectTimeOfDay() {
+            const hour = new Date().getHours();
+            if (hour < 12) {
+                currentTime = 'morning';
+                return { time: 'morning', greeting_ja: 'おはようございます 🌅', greeting_en: 'Good morning 🌅' };
+            } else if (hour < 18) {
+                currentTime = 'afternoon';
+                return { time: 'afternoon', greeting_ja: 'こんにちは ☀️', greeting_en: 'Good afternoon ☀️' };
+            } else {
+                currentTime = 'evening';
+                return { time: 'evening', greeting_ja: 'こんばんは 🌙', greeting_en: 'Good evening 🌙' };
+            }
+        }
+
+        // ========================================
+        // 言語切り替え
+        // ========================================
+        langJaBtn.addEventListener('click', () => switchLanguage('ja'));
+        langEnBtn.addEventListener('click', () => switchLanguage('en'));
+
+        function switchLanguage(lang) {
+            currentLanguage = lang;
+            
+            if (lang === 'ja') {
+                langJaBtn.classList.add('bg-white', 'shadow-sm');
+                langJaBtn.classList.remove('text-gray-600');
+                langEnBtn.classList.remove('bg-white', 'shadow-sm');
+                langEnBtn.classList.add('text-gray-600');
+            } else {
+                langEnBtn.classList.add('bg-white', 'shadow-sm');
+                langEnBtn.classList.remove('text-gray-600');
+                langJaBtn.classList.remove('bg-white', 'shadow-sm');
+                langJaBtn.classList.add('text-gray-600');
+            }
+            
+            updateUIText();
+            
+            // インサイトが既に表示されていたら再表示
+            if (selectedInsights.length > 0) {
+                displayInsights(selectedInsights);
+                // 締めくくりメッセージも更新
+                const message = closingMessages[selectedConcern][currentTime][currentLanguage];
+                document.getElementById('closingText').textContent = message;
+            }
+        }
+
+        function updateUIText() {
+            const timeInfo = detectTimeOfDay();
+            const texts = {
+                ja: {
+                    timeGreeting: timeInfo.greeting_ja,
+                    labelConcern: '今、気になっていることは？',
+                    concernRelationships: '人間関係',
+                    concernCareer: '仕事・キャリア',
+                    concernMoney: 'お金・経済的不安',
+                    concernHealth: '健康・生活習慣',
+                    concernPurpose: '人生の意味・目的',
+                    concernSelfesteem: '自己肯定感',
+                    concernBalance: 'ワークライフバランス',
+                    concernFuture: '将来への不安',
+                    btnText: '8つのヒントを受け取る ✨',
+                    infoText: '幸福度研究の第一人者たちから、それぞれ1つずつヒントが届きます。<br>気になったヒントをタップすると詳しく表示されます。'
+                },
+                en: {
+                    timeGreeting: timeInfo.greeting_en,
+                    labelConcern: 'What concerns you now?',
+                    concernRelationships: 'Relationships',
+                    concernCareer: 'Work & Career',
+                    concernMoney: 'Money & Finance',
+                    concernHealth: 'Health & Lifestyle',
+                    concernPurpose: 'Life Purpose',
+                    concernSelfesteem: 'Self-esteem',
+                    concernBalance: 'Work-Life Balance',
+                    concernFuture: 'Future Anxiety',
+                    btnText: 'Receive 8 Insights ✨',
+                    infoText: 'You will receive one insight from each of the leading happiness researchers.<br>Tap any insight to see it in detail.'
+                }
+            };
+            
+            const t = texts[currentLanguage];
+            document.getElementById('timeGreeting').textContent = t.timeGreeting;
+            document.getElementById('labelConcern').textContent = t.labelConcern;
+            document.getElementById('concernRelationships').textContent = t.concernRelationships;
+            document.getElementById('concernCareer').textContent = t.concernCareer;
+            document.getElementById('concernMoney').textContent = t.concernMoney;
+            document.getElementById('concernHealth').textContent = t.concernHealth;
+            document.getElementById('concernPurpose').textContent = t.concernPurpose;
+            document.getElementById('concernSelfesteem').textContent = t.concernSelfesteem;
+            document.getElementById('concernBalance').textContent = t.concernBalance;
+            document.getElementById('concernFuture').textContent = t.concernFuture;
+            document.getElementById('btnText').textContent = t.btnText;
+            document.getElementById('infoText').innerHTML = t.infoText;
+        }
+
+        // ========================================
+        // 悩み選択
+        // ========================================
+        document.querySelectorAll('.concern-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.concern-btn').forEach(b => {
+                    b.classList.remove('border-pink-300', 'bg-pink-50', 'text-pink-700');
+                    b.classList.add('border-gray-300', 'bg-white', 'text-gray-700');
+                });
+                this.classList.remove('border-gray-300', 'bg-white', 'text-gray-700');
+                this.classList.add('border-pink-300', 'bg-pink-50', 'text-pink-700');
+                selectedConcern = this.dataset.concern;
+            });
+        });
+
+        // ========================================
+        // 悩みに対応するキーワード
+        // ========================================
+        const concernKeywords = {
+            relationships: ['人間関係', 'relationships', '繋がり', 'connection', '友人', 'friends'],
+            career: ['仕事', 'work', 'キャリア', 'career', '充実', 'fulfillment', '没頭', 'flow'],
+            money: ['お金', 'money', '経済', 'financial', '安全', 'security'],
+            health: ['健康', 'health', '習慣', 'habits', 'ストレス', 'stress'],
+            purpose: ['意味', 'meaning', '目的', 'purpose', '幸福', 'happiness'],
+            selfesteem: ['自己', 'self', '承認', 'approval', '勇気', 'courage', '成長', 'growth'],
+            balance: ['バランス', 'balance', '今', 'present', '瞑想', 'mindfulness'],
+            future: ['将来', 'future', '不安', 'anxiety', '希望', 'hope', '楽観', 'optimism']
+        };
+
+        // ========================================
+        // RAG: 各研究者から1つずつインサイトを選択
+        // ========================================
+        function selectInsightsFromAllSources() {
+            const sources = ['seligman', 'csikszentmihalyi', 'lyubomirsky', 'rubin', 'adler', 'kabatzinn', 'waldinger', 'kahneman'];
+            const selectedKeywords = concernKeywords[selectedConcern] || [];
+            const insights = [];
+
+            sources.forEach(source => {
+                const candidatesForSource = happinessDatabase.filter(i => i.source === source);
+                
+                // キーワードマッチング
+                const scored = candidatesForSource.map(insight => {
+                    let score = 0;
+                    insight.keywords.forEach(keyword => {
+                        selectedKeywords.forEach(concernKeyword => {
+                            if (keyword.toLowerCase() === concernKeyword.toLowerCase()) {
+                                score += 1;
+                            }
+                        });
+                    });
+                    return { insight, score };
+                });
+                
+                scored.sort((a, b) => b.score - a.score);
+                
+                // スコアが高いものから選択、なければランダム
+                if (scored[0].score > 0) {
+                    insights.push(scored[0].insight);
+                } else {
+                    insights.push(candidatesForSource[Math.floor(Math.random() * candidatesForSource.length)]);
+                }
+            });
+
+            return insights;
+        }
+
+        // ========================================
+        // インサイトカードの表示
+        // ========================================
+        function displayInsights(insights) {
+            const shareText = currentLanguage === 'ja' ? 'シェアする' : 'Share';
+
+            insightsGrid.innerHTML = insights.map((insight, index) => `
+                <div class="insight-card card rounded-xl p-6 border-2 border-gray-200" data-index="${index}">
+                    <div class="text-xs font-semibold text-pink-600 mb-2">
+                        ${insight.author}
+                    </div>
+                    <div class="insight-text text-lg leading-relaxed mb-3 text-gray-800">
+                        ${currentLanguage === 'ja' ? insight.text_ja : insight.text_en}
+                    </div>
+                    <div class="text-xs text-gray-500 mb-4">
+                        ${insight.book}
+                    </div>
+                    <button class="share-btn w-full bg-gradient-to-r from-green-500 to-teal-500 text-white py-2 rounded-lg text-sm font-semibold shadow-lg hover:shadow-xl transition" onclick="shareInsight(${index})">
+                        💫 ${shareText}
+                    </button>
+                </div>
+            `).join('');
+
+            insightsGrid.classList.remove('hidden');
+
+            // カードクリックイベント
+            document.querySelectorAll('.insight-card').forEach(card => {
+                card.addEventListener('click', function(e) {
+                    // シェアボタンのクリックは除外
+                    if (e.target.closest('.share-btn')) return;
+                    
+                    // 既に展開されているカードをクリックしたら閉じる
+                    if (this.classList.contains('expanded')) {
+                        this.classList.remove('expanded');
+                    } else {
+                        // 他のカードを閉じる
+                        document.querySelectorAll('.insight-card').forEach(c => c.classList.remove('expanded'));
+                        // このカードを展開
+                        this.classList.add('expanded');
+                    }
+                });
+            });
+        }
+
+        // ========================================
+        // シェア機能
+        // ========================================
+        window.shareInsight = function(index) {
+            const insight = selectedInsights[index];
+            const insightText = currentLanguage === 'ja' ? insight.text_ja : insight.text_en;
+            const shareText = `💡 ${insightText}\n\n- ${insight.author}\n${insight.book}\n\n#HappinessInsights`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Happiness Insights',
+                    text: shareText
+                });
+            } else {
+                navigator.clipboard.writeText(shareText).then(() => {
+                    alert(currentLanguage === 'ja' ? 'コピーしました！' : 'Copied!');
+                });
+            }
+        };
+
+        // ========================================
+        // メイン処理
+        // ========================================
+        generateBtn.addEventListener('click', () => {
+            generateBtn.disabled = true;
+            const originalText = document.getElementById('btnText').textContent;
+            document.getElementById('btnText').innerHTML = '<span class="loading"></span> ' + 
+                (currentLanguage === 'ja' ? '選んでいるよ...' : 'Selecting...');
+            
+            setTimeout(() => {
+                selectedInsights = selectInsightsFromAllSources();
+                displayInsights(selectedInsights);
+                
+                // 締めくくりメッセージを表示
+                const message = closingMessages[selectedConcern][currentTime][currentLanguage];
+                document.getElementById('closingText').textContent = message;
+                document.getElementById('closingMessage').classList.remove('hidden');
+                
+                insightsGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+                generateBtn.disabled = false;
+                document.getElementById('btnText').textContent = originalText;
+            }, 500);
+        });
+
+        // ========================================
+        // 初期化
+        // ========================================
+        updateUIText();
+    </script>
+</body>
+</html>
